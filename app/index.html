@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es-GT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Seguridad: la app solo carga archivos propios. Nada externo, nada en línea. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#e6e6e2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1c1a" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Cotizador, inventario de filamento y control de ventas para impresión 3D.">
+<title>EJEPRINT Taller</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="barra">
+    <span class="marca"><span class="dot"></span>EJEPRINT</span>
+    <h1 id="titulo"></h1>
+  </header>
+  <main id="vista"><p class="cargando">Cargando…</p></main>
+  <nav id="nav" aria-label="Secciones"></nav>
+  <noscript><p class="cargando">Esta app necesita JavaScript activado.</p></noscript>
+</body>
+</html>
