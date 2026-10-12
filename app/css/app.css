@@ -146,6 +146,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--ink); outline: n
 .estrato .capa { width: var(--w); min-width: 3px; }
 .capa.c-mat { background: var(--red); }
 .capa.c-maq { background: var(--gold); }
+.capa.c-luz { background: #f2c230; }
 .capa.c-tiempo { background: var(--ink-2); }
 .capa.c-emp { background: var(--muted); }
 .capa.c-gan { background: repeating-linear-gradient(-45deg, var(--ink) 0 3px, color-mix(in srgb, var(--ink) 55%, transparent) 3px 6px); }
@@ -338,3 +339,17 @@ body.sin-nav #toast { bottom: 24px; }
   * { animation: none !important; transition: none !important; }
 }
 [hidden]{display:none!important}
+
+/* ---------- luz a pagar ---------- */
+.luz-pagar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 14px 0 2px;
+  padding: 10px 12px; border-radius: var(--r-s); border: 1px solid color-mix(in srgb, #f2c230 55%, transparent);
+  background: color-mix(in srgb, #f2c230 14%, transparent); }
+.luz-pagar span { display: flex; flex-direction: column; font-size: 14px; }
+.luz-pagar small { color: var(--muted); font-size: 12.5px; }
+.luz-monto { font-family: var(--display); font-stretch: 118%; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fila-luz { background: color-mix(in srgb, #f2c230 12%, transparent); border-radius: var(--r-s); padding-left: 10px; padding-right: 10px; }
+.luz-bloque .luz-num { font-family: var(--display); font-stretch: 122%; font-weight: 850; font-size: 40px; letter-spacing: -.03em;
+  line-height: 1; margin: 2px 0 10px; font-variant-numeric: tabular-nums; }
+.luz-bloque { border-left: 4px solid #f2c230; padding-left: 14px; }
+.luz-bloque.al-dia { border-left-color: var(--ok); }
+.luz-bloque.al-dia .luz-num { color: var(--ok); font-size: 30px; }

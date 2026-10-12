@@ -59,7 +59,8 @@ const venta = o => {
     multNombre: S(o.multNombre, 60), multValor: N(o.multValor, 1, 0),
     costos: {
       material: N(c.material), maquina: N(c.maquina), post: N(c.post), diseno: N(c.diseno),
-      empaque: N(c.empaque), total: N(c.total), dep: N(c.dep)
+      empaque: N(c.empaque), total: N(c.total), dep: N(c.dep),
+      luz: c.luz === undefined ? null : N(c.luz, 0, 0), kwh: N(c.kwh, 0, 0)
     },
     sugerido: N(o.sugerido, 0, 0), precio: N(o.precio, 0, 0),
     estado: ESTADOS.includes(o.estado) ? o.estado : 'Entregado',
@@ -74,6 +75,8 @@ const gasto = o => o && ({
 
 const itemValor = o => o && ({ id: ID(o.id), nombre: S(o.nombre, 60) || 'Sin nombre', valor: N(o.valor, 0, 0) });
 const itemPct = o => o && ({ id: ID(o.id), nombre: S(o.nombre, 60) || 'Sin nombre', pct: N(o.pct, 0, 0, 1) });
+
+const conLuz = l => (l.includes('Luz') ? l : ['Luz', ...l]);
 
 function settings(raw) {
   const d = defaultSettings();
@@ -98,7 +101,7 @@ function settings(raw) {
       pagadas: Math.round(N(s.deuda?.pagadas, d.deuda.pagadas, 0, 1000))
     },
     canales: listaNoVacia(s.canales, v => S(v, 40) || null, d.canales),
-    categoriasGasto: listaNoVacia(s.categoriasGasto, v => S(v, 40) || null, d.categoriasGasto),
+    categoriasGasto: conLuz(listaNoVacia(s.categoriasGasto, v => S(v, 40) || null, d.categoriasGasto)),
     impresoraActiva: S(s.impresoraActiva, 64) || d.impresoraActiva,
     ultimoRespaldo: S(s.ultimoRespaldo, 40)
   };
@@ -121,6 +124,12 @@ export function normalizar(raw) {
     borrador: raw.borrador && typeof raw.borrador === 'object' ? raw.borrador : null
   };
   if (!st.impresoras.some(i => i.id === st.settings.impresoraActiva)) st.settings.impresoraActiva = st.impresoras[0].id;
+  // Ventas guardadas antes de separar la luz: se estima con la máquina y la tarifa actuales.
+  for (const v of st.ventas) if (v.costos.luz === null) {
+    const imp = st.impresoras.find(i => i.id === v.impresoraId) || st.impresoras[0];
+    v.costos.kwh = v.horas * imp.kwh;
+    v.costos.luz = v.costos.kwh * st.settings.tarifaLuz;
+  }
   return st;
 }
 

@@ -28,7 +28,8 @@ function detalleVenta(v) {
         <dt>Precio cobrado</dt><dd><b>${fmtQ(v.precio)}</b></dd>
         <dt>Precio sugerido</dt><dd>${fmtQ(v.sugerido)}</dd>
         <dt>Material</dt><dd>${fmtQ(v.costos.material)}</dd>
-        <dt>Máquina (${fmtHoras(v.horas)})</dt><dd>${fmtQ(v.costos.maquina)}</dd>
+        <dt>Máquina (${fmtHoras(v.horas)})</dt><dd>${fmtQ(v.costos.maquina - v.costos.luz)}</dd>
+        <dt>Luz a pagar en casa (${fmtN(v.costos.kwh, 2)} kWh)</dt><dd>${fmtQ(v.costos.luz)}</dd>
         <dt>Acabado</dt><dd>${fmtQ(v.costos.post)}</dd>
         <dt>Diseño${v.tarifaNombre ? ` (${v.tarifaNombre})` : ''}</dt><dd>${fmtQ(v.costos.diseno)}</dd>
         <dt>Empaque</dt><dd>${fmtQ(v.costos.empaque)}</dd>
@@ -164,11 +165,11 @@ export default {
       }
 
       if (a === 'csv-ventas') {
-        const filas = [['Fecha', 'Cliente', 'Canal', 'Trabajo', 'Estado', 'Gramos', 'Horas', 'Material', 'Máquina', 'Acabado', 'Diseño', 'Empaque', 'Costo total', 'Sugerido', 'Precio', 'Ganancia', 'Q por hora']];
+        const filas = [['Fecha', 'Cliente', 'Canal', 'Trabajo', 'Estado', 'Gramos', 'Horas', 'Material', 'Máquina', 'Luz', 'kWh', 'Acabado', 'Diseño', 'Empaque', 'Costo total', 'Sugerido', 'Precio', 'Ganancia', 'Q por hora']];
         for (const v of [...st.ventas].sort((a, b) => a.fecha.localeCompare(b.fecha))) {
           const g = v.materiales.reduce((a, l) => a + l.gramos, 0);
           filas.push([v.fecha, v.cliente, v.canal, v.producto, v.estado, g.toFixed(1), v.horas.toFixed(2),
-            v.costos.material.toFixed(2), v.costos.maquina.toFixed(2), v.costos.post.toFixed(2), v.costos.diseno.toFixed(2),
+            v.costos.material.toFixed(2), (v.costos.maquina - v.costos.luz).toFixed(2), v.costos.luz.toFixed(2), v.costos.kwh.toFixed(3), v.costos.post.toFixed(2), v.costos.diseno.toFixed(2),
             v.costos.empaque.toFixed(2), v.costos.total.toFixed(2), v.sugerido.toFixed(2), v.precio.toFixed(2),
             (v.precio - v.costos.total).toFixed(2), (v.horas ? v.precio / v.horas : 0).toFixed(2)]);
         }

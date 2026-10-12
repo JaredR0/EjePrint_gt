@@ -2,7 +2,7 @@
 // Cada vez que cambies cualquier archivo de la app, subí el número de VERSION.
 // Así los teléfonos detectan que hay versión nueva y ofrecen actualizar.
 
-const VERSION = 'ejeprint-taller-1.0.0';
+const VERSION = 'ejeprint-taller-1.1.0';
 const ARCHIVOS = [
   './', './index.html', './privacidad.html', './manifest.webmanifest',
   './css/app.css',

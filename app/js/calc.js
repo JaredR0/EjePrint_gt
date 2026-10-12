@@ -41,6 +41,8 @@ export function cotizar(b, st) {
   const gramos = lineas.reduce((a, l) => a + l.gramos, 0);
   const material = lineas.reduce((a, l) => a + l.gramos * l.costoG, 0) * s.factorFallos;
   const maquina = horas * hm.total;
+  const luz = horas * hm.luz;                 // lo que hay que pagar en casa por la electricidad
+  const kwh = horas * (imp ? imp.kwh : 0);
   const post = Math.max(0, num(b.postMin)) / 60 * s.postHora;
   const tarifa = s.tarifasDiseno.find(t => t.id === b.tarifaId) || s.tarifasDiseno[0] || { nombre: '', valor: 0 };
   const diseno = Math.max(0, num(b.disenoH)) * tarifa.valor;
@@ -53,7 +55,7 @@ export function cotizar(b, st) {
   const sugerido = total > 0 ? Math.ceil(sugeridoExacto / 5) * 5 : 0;
   const piezas = Math.max(1, Math.round(num(b.piezas, 1)));
 
-  return { imp, hm, horas, lineas, gramos, material, maquina, post, diseno, empaque,
+  return { imp, hm, horas, lineas, gramos, material, maquina, luz, kwh, desgaste: maquina - luz, post, diseno, empaque,
     produccion, total, mult, tarifa, sugeridoExacto, sugerido, piezas, dep: horas * hm.dep };
 }
 
@@ -65,7 +67,8 @@ export function evaluar(c, precio) {
     margenPct: precio > 0 ? margen / precio : 0,
     qHora: c.horas > 0 ? precio / c.horas : 0,
     teLlevas: c.post + c.diseno + margen,          // tu tiempo + ganancia del negocio
-    reserva: c.material + c.maquina + c.empaque,   // lo que queda para reponer y mantener
+    luz: c.luz,                                    // lo que pagás en casa por la electricidad
+    reserva: c.material + c.desgaste + c.empaque,  // lo que queda para reponer y mantener
     porPieza: precio / Math.max(1, c.piezas)
   };
 }
@@ -89,11 +92,12 @@ export function resumen(st, desde, hasta) {
   const ventas = st.ventas.filter(v => cuentaComoVenta(v) && enRango(v.fecha, desde, hasta));
   const gastos = st.gastos.filter(g => enRango(g.fecha, desde, hasta));
   const r = { n: ventas.length, ingreso: 0, costo: 0, margen: 0, diseno: 0, post: 0, material: 0,
-    maquina: 0, empaque: 0, horas: 0, gramos: 0, dep: 0, gastos: 0, porCanal: {} };
+    maquina: 0, empaque: 0, horas: 0, gramos: 0, dep: 0, luz: 0, kwh: 0, gastos: 0, porCanal: {} };
   for (const v of ventas) {
     r.ingreso += v.precio; r.costo += v.costos.total; r.margen += v.precio - v.costos.total;
     r.diseno += v.costos.diseno; r.post += v.costos.post; r.material += v.costos.material;
     r.maquina += v.costos.maquina; r.empaque += v.costos.empaque; r.horas += v.horas; r.dep += v.costos.dep;
+    r.luz += v.costos.luz; r.kwh += v.costos.kwh;
     r.gramos += v.materiales.reduce((a, l) => a + l.gramos, 0);
     const k = v.canal || 'Sin canal';
     r.porCanal[k] = r.porCanal[k] || { ingreso: 0, n: 0 };
@@ -120,6 +124,15 @@ export function porMes(st, cuantos = 6) {
     out.push({ etiqueta: MESES[d.getMonth()], ingreso: r.ingreso, margen: r.margen });
   }
   return out;
+}
+
+// Luz que generaron las ventas contra lo que ya pagaste (gastos en la categoría Luz).
+export const CATEGORIA_LUZ = 'Luz';
+export function luzPendiente(st) {
+  let generado = 0, kwh = 0, trabajos = 0, pagado = 0, ultimoPago = '';
+  for (const v of st.ventas) if (cuentaComoVenta(v) && v.costos.luz > 0) { generado += v.costos.luz; kwh += v.costos.kwh; trabajos++; }
+  for (const g of st.gastos) if (g.categoria === CATEGORIA_LUZ) { pagado += g.monto; if (g.fecha > ultimoPago) ultimoPago = g.fecha; }
+  return { generado, pagado, pendiente: generado - pagado, kwh, trabajos, ultimoPago };
 }
 
 export const fijosTotal = s => s.fijos.reduce((a, f) => a + f.valor, 0);

@@ -1,5 +1,7 @@
-import { html, raw, mount, fmtQ, fmtN, fmtPct, fmtHoras, pct, estrato } from '../ui.js';
-import { resumen, porMes, rangoPeriodo, fijosTotal, puntoEquilibrio, saldoDeuda } from '../calc.js';
+import { html, raw, mount, fmtQ, fmtN, fmtPct, fmtHoras, fmtFecha, pct, estrato, abrirDialogo, toast } from '../ui.js';
+import { resumen, porMes, rangoPeriodo, fijosTotal, puntoEquilibrio, saldoDeuda, luzPendiente, CATEGORIA_LUZ, num } from '../calc.js';
+import { uid } from '../store.js';
+import { hoyISO } from '../defaults.js';
 
 const ICONO = raw('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>');
 
@@ -60,6 +62,8 @@ export default {
     const canales = Object.entries(r.porCanal).sort((a, b) => b[1].ingreso - a[1].ingreso);
     const maxCanal = Math.max(1, ...canales.map(c => c[1].ingreso));
     const nombrePeriodo = PERIODOS.find(p => p.id === periodo).nombre.toLowerCase();
+    const luz = luzPendiente(st);
+    const alDia = luz.pendiente < 0.005;
 
     mount(el, html`
       <div class="chips chips-scroll" role="tablist" aria-label="Periodo">
@@ -78,7 +82,8 @@ export default {
           <p class="res-sub">de ${fmtQ(r.ingreso, 0)} vendidos en ${r.n} ${r.n === 1 ? 'venta' : 'ventas'}, margen ${fmtPct(r.margenPct)}</p>
           ${estrato([
             { nombre: 'Material', valor: r.material, clase: 'c-mat' },
-            { nombre: 'Máquina', valor: r.maquina, clase: 'c-maq' },
+            { nombre: 'Máquina', valor: r.maquina - r.luz, clase: 'c-maq' },
+            { nombre: 'Luz', valor: r.luz, clase: 'c-luz' },
             { nombre: 'Tu tiempo', valor: r.post + r.diseno, clase: 'c-tiempo' },
             { nombre: 'Empaque', valor: r.empaque, clase: 'c-emp' },
             { nombre: 'Ganancia', valor: Math.max(0, r.margen), clase: 'c-gan' }
@@ -95,6 +100,15 @@ export default {
           <div class="kpi"><span>Gastos pagados</span><b>${fmtQ(r.gastos, 0)}</b><small>en el periodo</small></div>
           <div class="kpi ${r.flujo < 0 ? 'neg' : ''}"><span>Flujo de caja</span><b>${fmtQ(r.flujo, 0)}</b><small>ventas menos gastos</small></div>
         </section>`}
+
+      ${luz.generado > 0 || luz.pagado > 0 ? html`
+        <section class="bloque luz-bloque ${alDia ? 'al-dia' : ''}">
+          <h2 class="bloque-t">Luz por pagar en casa</h2>
+          <p class="luz-num">${alDia ? (luz.pendiente < -0.005 ? `${fmtQ(-luz.pendiente)} a favor` : 'Al día') : fmtQ(luz.pendiente)}</p>
+          <p class="ayuda">${luz.trabajos} ${luz.trabajos === 1 ? 'trabajo' : 'trabajos'} han gastado ${fmtN(luz.kwh, 1)} kWh, que son ${fmtQ(luz.generado)}.
+            ${luz.pagado > 0 ? `Ya pagaste ${fmtQ(luz.pagado)}${luz.ultimoPago ? `, la última vez el ${fmtFecha(luz.ultimoPago)}` : ''}.` : 'Todavía no has registrado ningún pago.'}</p>
+          ${alDia ? '' : html`<button type="button" class="btn btn-primario btn-ancho" data-a="pagar-luz">Registrar pago de luz</button>`}
+        </section>` : ''}
 
       <section class="bloque">
         <h2 class="bloque-t">Este mes</h2>
@@ -137,9 +151,30 @@ export default {
       </section>
     `);
 
-    el.addEventListener('click', e => {
+    el.addEventListener('click', async e => {
       const p = e.target.closest('[data-p]')?.dataset.p;
-      if (p && p !== periodo) { periodo = p; ctx.rerender(); }
+      if (p && p !== periodo) { periodo = p; ctx.rerender(); return; }
+      if (e.target.closest('[data-a="pagar-luz"]')) {
+        const fd = await abrirDialogo(html`
+          <form method="dialog">
+            <h2>Registrar pago de luz</h2>
+            <p class="dlg-detalle">Debés ${fmtQ(luz.pendiente)}. Si pagás otra cantidad, cambiala: lo que falte queda pendiente.</p>
+            <div class="fila">
+              <label class="campo"><span>Monto (Q)</span><input name="monto" value="${(Math.round(luz.pendiente * 100) / 100).toFixed(2)}" inputmode="decimal" required autocomplete="off"></label>
+              <label class="campo"><span>Fecha</span><input type="date" name="fecha" value="${hoyISO()}" required></label>
+            </div>
+            <p class="dlg-error" hidden></p>
+            <div class="dlg-acciones">
+              <button class="btn" value="cancel" formnovalidate>Cancelar</button>
+              <button class="btn btn-primario" value="ok">Registrar pago</button>
+            </div>
+          </form>`, { validar: d => (num(d.get('monto'), 0) > 0 ? null : 'Poné un monto mayor que cero.') });
+        if (!fd) return;
+        ctx.update(s2 => s2.gastos.push({ id: uid(), fecha: fd.get('fecha'), categoria: CATEGORIA_LUZ,
+          descripcion: 'Pago de luz de las impresiones', monto: num(fd.get('monto')) }));
+        toast('Pago de luz registrado.');
+        ctx.rerender();
+      }
     });
   }
 };

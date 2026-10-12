@@ -157,9 +157,14 @@ export default {
         <p class="res-etq">Precio sugerido</p>
         <p class="res-num">${fmtQ(c.sugerido, 0)}</p>
         <p class="res-sub">${c.piezas > 1 ? html`${fmtQ(c.sugerido / c.piezas)} por pieza, ` : ''}${fmtHoras(c.horas)} de máquina</p>
+        <div class="luz-pagar">
+          <span><b>Luz a pagar en casa</b><small>${fmtN(c.kwh, 2)} kWh a ${fmtQ(st.settings.tarifaLuz)} el kWh</small></span>
+          <b class="luz-monto">${fmtQ(c.luz)}</b>
+        </div>
         ${estrato([
           { nombre: 'Material', valor: c.material, clase: 'c-mat' },
-          { nombre: 'Máquina', valor: c.maquina, clase: 'c-maq' },
+          { nombre: 'Máquina', valor: c.desgaste, clase: 'c-maq' },
+          { nombre: 'Luz', valor: c.luz, clase: 'c-luz' },
           { nombre: 'Tu tiempo', valor: c.post + c.diseno, clase: 'c-tiempo' },
           { nombre: 'Empaque', valor: c.empaque, clase: 'c-emp' },
           { nombre: 'Ganancia', valor: c.sugerido - c.total, clase: 'c-gan' }
@@ -168,7 +173,8 @@ export default {
           <summary>Ver el cálculo</summary>
           <dl>
             <dt>Material (con ${fmtPct(st.settings.factorFallos - 1)} por fallos)</dt><dd>${fmtQ(c.material)}</dd>
-            <dt>Máquina: ${fmtQ(c.hm.total)}/h × ${fmtN(c.horas, 2)} h</dt><dd>${fmtQ(c.maquina)}</dd>
+            <dt>Máquina, desgaste y mantenimiento: ${fmtQ(c.hm.dep + c.hm.mant)}/h × ${fmtN(c.horas, 2)} h</dt><dd>${fmtQ(c.desgaste)}</dd>
+            <dt>Luz: ${fmtN(c.kwh, 2)} kWh × ${fmtQ(st.settings.tarifaLuz)}</dt><dd>${fmtQ(c.luz)}</dd>
             <dt>Acabado</dt><dd>${fmtQ(c.post)}</dd>
             <dt>Diseño (${c.tarifa.nombre})</dt><dd>${fmtQ(c.diseno)}</dd>
             <dt>Empaque</dt><dd>${fmtQ(c.empaque)}</dd>
@@ -194,7 +200,8 @@ export default {
             <span>Ganancia del negocio</span><b>${fmtQ(e.margen)} <small>${fmtPct(e.margenPct)}</small></b>
           </div>
           <div class="eval-fila"><span>Te llevás <small>tu tiempo más la ganancia</small></span><b>${fmtQ(e.teLlevas)}</b></div>
-          <div class="eval-fila"><span>Queda para el negocio <small>material, máquina y empaque</small></span><b>${fmtQ(e.reserva)}</b></div>
+          <div class="eval-fila"><span>Queda para el negocio <small>material, desgaste de la máquina y empaque</small></span><b>${fmtQ(e.reserva)}</b></div>
+          <div class="eval-fila fila-luz"><span>Pagás de luz en casa <small>lo único que sale de tu bolsa en este trabajo</small></span><b>${fmtQ(e.luz)}</b></div>
           ${c.piezas > 1 ? html`<div class="eval-fila"><span>Por pieza</span><b>${fmtQ(e.porPieza)}</b></div>` : ''}
           <div class="eval-fila nivel-${nivel}">
             <span>Q por hora-máquina <small>${textoNivel}</small></span><b>${fmtQ(e.qHora)}</b>
@@ -249,7 +256,7 @@ export default {
       const fd = await abrirDialogo(html`
         <form method="dialog">
           <h2>${soloCotizacion ? 'Guardar cotización' : 'Registrar venta'}</h2>
-          <p class="dlg-detalle">${b.producto || 'Trabajo sin nombre'}, por ${fmtQ(precio)}</p>
+          <p class="dlg-detalle">${b.producto || 'Trabajo sin nombre'}, por ${fmtQ(precio)}. Luz de este trabajo: ${fmtQ(c.luz)}${soloCotizacion ? ', se suma a lo que debés de luz cuando pase a venta' : ', se suma a lo que debés de luz'}.</p>
           <label class="campo"><span>Cliente</span><input name="cliente" maxlength="80" autocomplete="off" placeholder="Nombre"></label>
           <div class="fila">
             <label class="campo"><span>Canal</span><select name="canal">${st.settings.canales.map(x => html`<option>${x}</option>`)}</select></label>
@@ -279,7 +286,7 @@ export default {
         materiales: c.lineas.map(l => ({ filamentoId: l.filamentoId, nombre: l.nombre, hex: l.hex, gramos: l.gramos, costoG: l.costoG })),
         postMin: num(b.postMin), disenoH: num(b.disenoH),
         tarifaNombre: c.tarifa.nombre, tarifaValor: c.tarifa.valor, multNombre: c.mult.nombre, multValor: c.mult.valor,
-        costos: { material: c.material, maquina: c.maquina, post: c.post, diseno: c.diseno, empaque: c.empaque, total: c.total, dep: c.dep },
+        costos: { material: c.material, maquina: c.maquina, post: c.post, diseno: c.diseno, empaque: c.empaque, total: c.total, dep: c.dep, luz: c.luz, kwh: c.kwh },
         sugerido: c.sugerido, precio, estado: fd.get('estado'), descontado: descontar, nota: fd.get('nota')
       };
       const ok = ctx.update(s => {

@@ -3,7 +3,7 @@
 // y store.js lo va a completar solo en los datos que ya existen.
 
 export const SCHEMA = 1;
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 
 export const MATERIALES = ['PLA', 'PLA+', 'PLA Silk', 'PLA Mate', 'PETG', 'TPU', 'ABS', 'ASA', 'Otro'];
 export const ESTADOS = ['Cotizado', 'Anticipo', 'Imprimiendo', 'Listo', 'Entregado', 'Cancelado'];
@@ -53,7 +53,7 @@ export function defaultSettings() {
     ],
     deuda: { saldo: 5700, cuota: 160, pagadas: 2 },
     canales: ['Instagram', 'TikTok', 'Facebook Marketplace', 'WhatsApp', 'Referido', 'Universidad', 'Corporativo', 'En persona', 'Otro'],
-    categoriasGasto: ['Filamento', 'Cuota impresora', 'Repuestos', 'Empaque', 'Publicidad', 'Envíos', 'Herramientas', 'Impuestos SAT', 'Otro'],
+    categoriasGasto: ['Luz', 'Filamento', 'Cuota impresora', 'Repuestos', 'Empaque', 'Publicidad', 'Envíos', 'Herramientas', 'Impuestos SAT', 'Otro'],
     impresoraActiva: 'kobra-s1',
     ultimoRespaldo: ''
   };
